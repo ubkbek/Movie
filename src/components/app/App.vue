@@ -11,7 +11,14 @@
         <AppFilter :updateFilterHandler="updateFilterHandler" />
       </div>
 
+      <Box v-if="!movies.length && !isLoading" class="text-danger fs-4">
+        Kinolar yo'q...
+      </Box>
+
+      <Box v-else-if="isLoading" class="text-center"> <Loader /></Box>
+
       <MovieList
+        v-else
         :movies="onFilterHandler(onSeaechHandler(movies, term), filter)"
         @onToggle="onToggleHandler"
         @onRemove="onRemoveHandler"
@@ -28,24 +35,24 @@ import AppFilter from "../app-filter/AppFilter.vue";
 import MovieList from "../movie-list/MovieList.vue";
 import MovieAddForm from "../movie-add-form/MovieAddForm.vue";
 
+import axios from "axios";
+import Loader from "../ui-components/Loader.vue";
+
 export default {
-  components: { AppInfo, SearchPanel, AppFilter, MovieList, MovieAddForm },
+  components: {
+    AppInfo,
+    SearchPanel,
+    AppFilter,
+    MovieList,
+    MovieAddForm,
+    Loader,
+  },
   data() {
     return {
-      movies: [
-        { id: 1, name: "Omar", viewers: 911, favourite: false, like: true },
-        { id: 2, name: "Ertugrul", viewers: 766, favourite: true, like: true },
-        { id: 4, name: "Troya", viewers: 201, favourite: false, like: true },
-        {
-          id: 3,
-          name: "Empire of osman",
-          viewers: 411,
-          favourite: false,
-          like: false,
-        },
-      ],
+      movies: [],
       term: "",
       filter: "all",
+      isLoading: false,
     };
   },
 
@@ -90,6 +97,34 @@ export default {
     updateFilterHandler(filter) {
       this.filter = filter;
     },
+
+    async fetchMovie() {
+      try {
+        this.isLoading = true;
+
+        const { data } = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts?__limit=10"
+        );
+
+        const newArr = data.map((item) => ({
+          id: item.id,
+          name: item.title,
+          favourite: false,
+          like: false,
+          viewers: item.id * 121,
+        }));
+
+        this.movies = newArr;
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+  },
+
+  mounted() {
+    this.fetchMovie();
   },
 };
 </script>
